@@ -45,13 +45,13 @@ class Fluent::HttpAltOutput < Fluent::BufferedOutput
       chunk_id = decode_unique_id(chunk.unique_id)
       in_chunk_cnt += 1 # for Error display
       begin
-        logger("Send to #{uri.to_s}, chunk_id:#{chunk_id}, in_chunk_cnt:#{in_chunk_cnt}")
-        logger("Inspect>> #{req.body}", :debug)
+        Fluent::HttpAltOutputLog.start(log, uri.to_s, chunk_id, in_chunk_cnt)
+        Fluent::HttpAltOutputLog.inspect(log, req.body)
         res = http.start{|c|c.request(req)}
         fail "Retry. Due to HTTP status was #{res.code}. chunk_id:#{chunk_id}, in_chunk_cnt:#{in_chunk_cnt}" if @retry_st.include?(res.code.to_i)
-        logger("Send success, chunk_id:#{chunk_id}, in_chunk_cnt:#{in_chunk_cnt}")
+        Fluent::HttpAltOutputLog.success(log, chunk_id, in_chunk_cnt)
       rescue => e
-        logger(e, :warn)
+        Fluent::HttpAltOutputLog.fail(log, e)
         raise e
       ensure
         body = begin
@@ -59,7 +59,7 @@ class Fluent::HttpAltOutput < Fluent::BufferedOutput
                rescue
                  nil # case of raise HTTP exception, `res` is nil.
                end
-        logger("Inspect>> #{body}", :debug)
+        Fluent::HttpAltOutputLog.inspect(log, body)
       end
     end
   end
@@ -69,13 +69,28 @@ class Fluent::HttpAltOutput < Fluent::BufferedOutput
     URI.parse(@append_tag_to_endpoint_url ? @endpoint_url+tag : @endpoint_url)
   end
 
-  def logger(line, level = :info)
-    log.send(level, "out_http_alt: #{line}")
-  end
-
   def decode_unique_id(chunk_unique_id)
     x = chunk_unique_id.length / 2 - 1
     chunk_unique_id[0..x].unpack("C*").map{|i|i.to_s(16)}.join
+  end
+end
+
+module Fluent::HttpAltOutputLog
+  extend self
+  def start(log, *args)
+    log.info("out_http_alt: Send to %s, chunk_id:%s, in_chunk_cnt:%s" % args)
+  end
+
+  def success(log, *args)
+    log.info("out_http_alt: Send success, chunk_id:%s, in_chunk_cnt:%s" % args)
+  end
+
+  def fail(log, *args)
+    log.warn("out_http_alt: %s" % args)
+  end
+
+  def inspect(log, *args)
+    log.debug("out_http_alt: Inspect>> %s" % args)
   end
 end
 
