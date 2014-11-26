@@ -52,7 +52,7 @@ class Fluent::HttpAltOutput < Fluent::BufferedOutput
         fail "Retry. Due to HTTP status was #{res.code}. chunk_id:#{chunk_id}, in_chunk_cnt:#{in_chunk_cnt}" if @retry_st.include?(res.code.to_i)
         Fluent::HttpAltOutputLog.success(log, chunk_id, in_chunk_cnt)
       rescue => e
-        Fluent::HttpAltOutputLog.fail(log, e)
+        Fluent::HttpAltOutputLog.fail(log, e, chunk_id, in_chunk_cnt)
         raise e
       ensure
         body = begin
@@ -87,7 +87,7 @@ module Fluent::HttpAltOutputLog
   end
 
   def fail(log, *args)
-    log.warn("out_http_alt: %s" % args)
+    log.warn("out_http_alt: %s, chunk_id:%s, in_chunk_cnt:%s" % args)
   end
 
   def inspect(log, *args)
@@ -130,7 +130,7 @@ class Fluent::HttpErrorRaise < Fluent::BufferedOutput
         fail "Retry. Due to HTTP status was #{res.code}. chunk_id:dummy, in_chunk_cnt:0" if @retry_st.include?(res.code.to_i)
         Fluent::HttpAltOutputLog.success(log, :dummy, 0)
       rescue => e
-        Fluent::HttpAltOutputLog.fail(log, e)
+        Fluent::HttpAltOutputLog.fail(log, e, :dummy, 0)
         raise e
       ensure
         Fluent::HttpAltOutputLog.inspect(log, "dummy res")
