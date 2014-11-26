@@ -5,7 +5,7 @@ Gem::Specification.new do |gem|
   gem.version       = "0.0.1"
   gem.authors       = ["Kohei MATSUSHITA"]
   gem.email         = ["ma2shita+git@ma2shita.jp"]
-  gem.summary       = %q{A generic Fluentd output plugin to send logs to an HTTP endpoint w/ bufferd}
+  gem.summary       = %q{A generic Fluentd output plugin to send logs to an HTTP endpoint w/ buffered}
   gem.description   = gem.summary
   gem.homepage      = "https://github.com/ma2shita/fluent-plugin-out-http-alt"
 
